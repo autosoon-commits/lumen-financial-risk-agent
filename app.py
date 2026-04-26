@@ -351,6 +351,16 @@ def risk_level(value):
 def filing_folder(filing_type):
     return filing_type.replace("-", "")
 
+def extract_date(file_name):
+    parts = file_name.split("_")
+    for part in parts:
+        if part.startswith("20"):
+            return part[:10]
+    return "Unknown"
+
+def display_period_label(row):
+    return f"{extract_date(row['older_file'])} → {extract_date(row['newer_file'])}"
+
 def extract_text_from_file(file_path):
     if not os.path.exists(file_path):
         return ""
@@ -649,7 +659,7 @@ with tab2:
         selected_row = st.selectbox(
             "Select Period",
             company_df.index,
-            format_func=lambda i: f"{company_df.loc[i, 'older_year']} → {company_df.loc[i, 'newer_year']}",
+            format_func=lambda i: display_period_label(company_df.loc[i]),
             key="single_period"
         )
 
@@ -722,7 +732,7 @@ with tab3:
             row_a_index = st.selectbox(
                 "Company A Period",
                 company_a_df.index,
-                format_func=lambda i: f"{company_a_df.loc[i, 'older_year']} → {company_a_df.loc[i, 'newer_year']}",
+                format_func=lambda i: display_period_label(company_a_df.loc[i]),
                 key="period_a"
             )
 
@@ -733,7 +743,7 @@ with tab3:
             row_b_index = st.selectbox(
                 "Company B Period",
                 company_b_df.index,
-                format_func=lambda i: f"{company_b_df.loc[i, 'older_year']} → {company_b_df.loc[i, 'newer_year']}",
+                format_func=lambda i: display_period_label(company_b_df.loc[i]),
                 key="period_b"
             )
 
