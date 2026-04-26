@@ -4,7 +4,6 @@ import html
 import pandas as pd
 import streamlit as st
 from bs4 import BeautifulSoup
-import altair as alt
 import plotly.express as px
 
 st.set_page_config(
@@ -13,55 +12,16 @@ st.set_page_config(
 )
 
 theme_options = {
-    "White": {
-        "accent": "#111827",
-        "background": "#ffffff",
-        "card": "#ffffff",
-        "text": "#111827"
-    },
-    "Navy": {
-        "accent": "#1F4E79",
-        "background": "#eef5fb",
-        "card": "#ffffff",
-        "text": "#111827"
-    },
-    "Green": {
-        "accent": "#047857",
-        "background": "#ecfdf5",
-        "card": "#ffffff",
-        "text": "#111827"
-    },
-    "Purple": {
-        "accent": "#6D28D9",
-        "background": "#f5f3ff",
-        "card": "#ffffff",
-        "text": "#111827"
-    },
-    "Burgundy": {
-        "accent": "#9F1239",
-        "background": "#fff1f2",
-        "card": "#ffffff",
-        "text": "#111827"
-    },
-    "Gold": {
-        "accent": "#B7791F",
-        "background": "#fffbeb",
-        "card": "#ffffff",
-        "text": "#111827"
-    },
-    "Dark": {
-        "accent": "#60A5FA",
-        "background": "#0f172a",
-        "card": "#1e293b",
-        "text": "#f1f5f9",
-        "subtext": "#cbd5e1"
-    }
+    "White": {"accent": "#111827", "background": "#ffffff", "card": "#ffffff", "text": "#111827"},
+    "Navy": {"accent": "#1F4E79", "background": "#eef5fb", "card": "#ffffff", "text": "#111827"},
+    "Green": {"accent": "#047857", "background": "#ecfdf5", "card": "#ffffff", "text": "#111827"},
+    "Purple": {"accent": "#6D28D9", "background": "#f5f3ff", "card": "#ffffff", "text": "#111827"},
+    "Burgundy": {"accent": "#9F1239", "background": "#fff1f2", "card": "#ffffff", "text": "#111827"},
+    "Gold": {"accent": "#B7791F", "background": "#fffbeb", "card": "#ffffff", "text": "#111827"},
+    "Dark": {"accent": "#60A5FA", "background": "#0f172a", "card": "#1e293b", "text": "#f1f5f9"}
 }
 
-selected_theme = st.sidebar.selectbox(
-    "Choose Theme",
-    list(theme_options.keys())
-)
+selected_theme = st.sidebar.selectbox("Choose Theme", list(theme_options.keys()))
 
 theme = theme_options[selected_theme]
 theme_color = theme["accent"]
@@ -95,10 +55,6 @@ section[data-testid="stSidebar"] div[data-baseweb="select"] > div {{
     border: 1px solid {"#334155" if selected_theme == "Dark" else "#d1d5db"} !important;
 }}
 
-section[data-testid="stSidebar"] [data-testid="stSlider"] span {{
-    color: {theme_color} !important;
-}}
-
 .block-container {{
     padding-top: 2rem;
 }}
@@ -128,24 +84,6 @@ p, div, span, label {{
     color: {"#e5e7eb" if selected_theme == "Dark" else "#111827"} !important;
 }}
 
-[data-testid="stText"] {{
-    color: {"#e5e7eb" if selected_theme == "Dark" else "#111827"} !important;
-}}
-
-[data-testid="stText"] pre {{
-    color: {"#e5e7eb" if selected_theme == "Dark" else "#111827"} !important;
-    background-color: {"#1e293b" if selected_theme == "Dark" else "#ffffff"} !important;
-    border: 1px solid {"#334155" if selected_theme == "Dark" else "#e6e8eb"};
-    border-radius: 12px;
-    padding: 16px;
-    white-space: pre-wrap;
-}}
-
-pre, code {{
-    color: {"#e5e7eb" if selected_theme == "Dark" else "#111827"} !important;
-    background-color: {"#1e293b" if selected_theme == "Dark" else "#ffffff"} !important;
-}}
-
 [data-testid="stMetric"] {{
     background: {card_background};
     padding: 18px;
@@ -160,10 +98,6 @@ pre, code {{
 
 [data-testid="stMetric"] [data-testid="stMetricValue"] {{
     color: {"#f8fafc" if selected_theme == "Dark" else "#111827"} !important;
-}}
-
-[data-testid="stMetric"] [data-testid="stMetricDelta"] {{
-    color: {theme_color} !important;
 }}
 
 .insight-box {{
@@ -204,22 +138,14 @@ div[data-baseweb="select"] span {{
     color: {text_color} !important;
 }}
 
-div[data-baseweb="popover"] {{
+div[data-baseweb="popover"], div[data-baseweb="popover"] * {{
     background-color: {card_background} !important;
-}}
-
-div[data-baseweb="popover"] * {{
     color: {text_color} !important;
-    background-color: {card_background} !important;
 }}
 
-ul[role="listbox"] {{
+ul[role="listbox"], ul[role="listbox"] li {{
     background-color: {card_background} !important;
-}}
-
-ul[role="listbox"] li {{
     color: {text_color} !important;
-    background-color: {card_background} !important;
 }}
 
 ul[role="listbox"] li:hover {{
@@ -245,7 +171,6 @@ mark {{
     line-height: 1.7;
     white-space: pre-wrap;
 }}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -272,20 +197,7 @@ keyword_map = {
     "technology": ["cybersecurity", "data breach", "system failure", "technology"]
 }
 
-def themed_bar_chart(data_dict, title="Risk Change"):
-    chart_df = pd.DataFrame({
-        "Risk Category": list(data_dict.keys()),
-        "Change": list(data_dict.values())
-    })
-
-    fig = px.bar(
-        chart_df,
-        x="Risk Category",
-        y="Change",
-        color="Risk Category",
-        color_discrete_sequence=[theme_color] * len(chart_df)
-    )
-
+def update_chart_layout(fig, title, df, y_col):
     fig.update_layout(
         title=title,
         plot_bgcolor=page_background,
@@ -293,10 +205,62 @@ def themed_bar_chart(data_dict, title="Risk Change"):
         font_color=text_color,
         xaxis=dict(color=text_color),
         yaxis=dict(color=text_color),
-        showlegend=False
+        showlegend=True
     )
 
+    fig.add_hline(
+        y=0,
+        line_dash="dash",
+        line_color="gray"
+    )
+
+    fig.update_yaxes(
+        range=[
+            min(df[y_col].min(), -1),
+            max(df[y_col].max(), 1)
+        ]
+    )
+
+    return fig
+
+def themed_risk_chart(data_dict, title="Risk Change", chart_type="Bar Chart"):
+    chart_df = pd.DataFrame({
+        "Risk Category": list(data_dict.keys()),
+        "Change": list(data_dict.values())
+    })
+
+    if chart_type == "Line Chart":
+        fig = px.line(
+            chart_df,
+            x="Risk Category",
+            y="Change",
+            markers=True
+        )
+        fig.update_traces(
+            line_color=theme_color,
+            marker_color=theme_color,
+            text=chart_df["Change"],
+            textposition="top center"
+        )
+    else:
+        fig = px.bar(
+            chart_df,
+            x="Risk Category",
+            y="Change",
+            text="Change",
+            color="Risk Category",
+            color_discrete_sequence=[theme_color] * len(chart_df)
+        )
+        fig.update_traces(
+            textposition="outside",
+            cliponaxis=False
+        )
+
+    fig = update_chart_layout(fig, title, chart_df, "Change")
+    fig.update_layout(showlegend=False)
+
     st.plotly_chart(fig, use_container_width=True)
+    st.caption("A value of 0 means no detected change, not missing data.")
 
 def themed_count_chart(series, title="Risk Signal Distribution"):
     chart_df = series.reset_index()
@@ -306,8 +270,14 @@ def themed_count_chart(series, title="Risk Signal Distribution"):
         chart_df,
         x="Risk Category",
         y="Count",
+        text="Count",
         color="Risk Category",
         color_discrete_sequence=[theme_color] * len(chart_df)
+    )
+
+    fig.update_traces(
+        textposition="outside",
+        cliponaxis=False
     )
 
     fig.update_layout(
@@ -320,34 +290,50 @@ def themed_count_chart(series, title="Risk Signal Distribution"):
         showlegend=False
     )
 
+    fig.update_yaxes(
+        range=[
+            min(chart_df["Count"].min(), 0),
+            max(chart_df["Count"].max(), 1)
+        ]
+    )
+
     st.plotly_chart(fig, use_container_width=True)
 
-def themed_comparison_chart(comparison_chart_df):
+def themed_comparison_chart(comparison_chart_df, chart_type="Bar Chart"):
     df = comparison_chart_df.reset_index().melt(
         id_vars="index",
         var_name="Company Period",
         value_name="Change"
     ).rename(columns={"index": "Risk Category"})
 
-    fig = px.bar(
-        df,
-        x="Risk Category",
-        y="Change",
-        color="Company Period",
-        barmode="group",
-        color_discrete_sequence=[theme_color, secondary_chart_color]
-    )
+    if chart_type == "Line Chart":
+        fig = px.line(
+            df,
+            x="Risk Category",
+            y="Change",
+            color="Company Period",
+            markers=True,
+            color_discrete_sequence=[theme_color, secondary_chart_color]
+        )
+    else:
+        fig = px.bar(
+            df,
+            x="Risk Category",
+            y="Change",
+            color="Company Period",
+            barmode="group",
+            text="Change",
+            color_discrete_sequence=[theme_color, secondary_chart_color]
+        )
+        fig.update_traces(
+            textposition="outside",
+            cliponaxis=False
+        )
 
-    fig.update_layout(
-        title="Side-by-Side Risk Change",
-        plot_bgcolor=page_background,
-        paper_bgcolor=page_background,
-        font_color=text_color,
-        xaxis=dict(color=text_color),
-        yaxis=dict(color=text_color)
-    )
+    fig = update_chart_layout(fig, "Side-by-Side Risk Change", df, "Change")
 
     st.plotly_chart(fig, use_container_width=True)
+    st.caption("A value of 0 means no detected change, not missing data.")
 
 def build_risk_dict(row):
     return {col: int(row[col]) for col in risk_columns}
@@ -370,9 +356,9 @@ def extract_text_from_file(file_path):
         return ""
 
     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-        html = f.read()
+        html_text = f.read()
 
-    soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(html_text, "html.parser")
 
     for tag in soup(["script", "style", "ix:nonfraction", "ix:nonnumeric"]):
         tag.extract()
@@ -676,7 +662,15 @@ with tab2:
         c3.metric("Signal Strength", risk_level(risk_change[row["top_increase"]]))
 
         st.markdown("#### Risk Change Chart")
-        themed_bar_chart(risk_change, "Risk Change Chart")
+
+        single_chart_type = st.radio(
+            "Choose Chart Type",
+            ["Bar Chart", "Line Chart"],
+            horizontal=True,
+            key="single_chart_type"
+        )
+
+        themed_risk_chart(risk_change, "Risk Change Chart", single_chart_type)
 
         st.markdown(build_single_insight(selected_company, row, risk_change), unsafe_allow_html=True)
 
@@ -697,7 +691,6 @@ with tab2:
         report_text = make_single_report_text(selected_company, row, risk_change)
 
         st.markdown("#### Exportable Report")
-        
         report_class = "report-box"
 
         st.markdown(
@@ -764,7 +757,15 @@ with tab3:
         })
 
         st.markdown("#### Side-by-Side Risk Change")
-        themed_comparison_chart(comparison_chart_df)
+
+        comparison_chart_type = st.radio(
+            "Choose Comparison Chart Type",
+            ["Bar Chart", "Line Chart"],
+            horizontal=True,
+            key="comparison_chart_type"
+        )
+
+        themed_comparison_chart(comparison_chart_df, comparison_chart_type)
 
         st.markdown(
             build_comparison_insight(company_a, row_a, risk_a, company_b, row_b, risk_b),
@@ -808,7 +809,6 @@ with tab3:
         report_text = make_comparison_report_text(company_a, row_a, risk_a, company_b, row_b, risk_b)
 
         st.markdown("#### Exportable Comparison Report")
-        
         report_class = "report-box"
 
         st.markdown(
