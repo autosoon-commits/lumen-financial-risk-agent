@@ -1,52 +1,251 @@
 import os
 import re
+import html
 import pandas as pd
 import streamlit as st
 from bs4 import BeautifulSoup
+import altair as alt
+import plotly.express as px
 
 st.set_page_config(
     page_title="Lumen Financial Risk Agent",
     layout="wide"
 )
 
-st.markdown("""
-<style>
-.block-container { padding-top: 2rem; }
+theme_options = {
+    "White": {
+        "accent": "#111827",
+        "background": "#ffffff",
+        "card": "#ffffff",
+        "text": "#111827"
+    },
+    "Navy": {
+        "accent": "#1F4E79",
+        "background": "#eef5fb",
+        "card": "#ffffff",
+        "text": "#111827"
+    },
+    "Green": {
+        "accent": "#047857",
+        "background": "#ecfdf5",
+        "card": "#ffffff",
+        "text": "#111827"
+    },
+    "Purple": {
+        "accent": "#6D28D9",
+        "background": "#f5f3ff",
+        "card": "#ffffff",
+        "text": "#111827"
+    },
+    "Burgundy": {
+        "accent": "#9F1239",
+        "background": "#fff1f2",
+        "card": "#ffffff",
+        "text": "#111827"
+    },
+    "Gold": {
+        "accent": "#B7791F",
+        "background": "#fffbeb",
+        "card": "#ffffff",
+        "text": "#111827"
+    },
+    "Dark": {
+        "accent": "#60A5FA",
+        "background": "#0f172a",
+        "card": "#1e293b",
+        "text": "#f1f5f9",
+        "subtext": "#cbd5e1"
+    }
+}
 
-.main-title {
+selected_theme = st.sidebar.selectbox(
+    "Choose Theme",
+    list(theme_options.keys())
+)
+
+theme = theme_options[selected_theme]
+theme_color = theme["accent"]
+page_background = theme["background"]
+card_background = theme["card"]
+text_color = theme["text"]
+secondary_chart_color = "#64748b" if selected_theme == "Dark" else "#9ca3af"
+
+st.markdown(f"""
+<style>
+.stApp {{
+    background-color: {page_background};
+    color: {text_color};
+}}
+
+header[data-testid="stHeader"] {{
+    background-color: {page_background} !important;
+}}
+
+section[data-testid="stSidebar"] {{
+    background-color: {page_background} !important;
+}}
+
+section[data-testid="stSidebar"] * {{
+    color: {text_color} !important;
+}}
+
+section[data-testid="stSidebar"] div[data-baseweb="select"] > div {{
+    background-color: {card_background} !important;
+    color: {text_color} !important;
+    border: 1px solid {"#334155" if selected_theme == "Dark" else "#d1d5db"} !important;
+}}
+
+section[data-testid="stSidebar"] [data-testid="stSlider"] span {{
+    color: {theme_color} !important;
+}}
+
+.block-container {{
+    padding-top: 2rem;
+}}
+
+.main-title {{
     font-size: 2.8rem;
     font-weight: 800;
     margin-bottom: 0.2rem;
-}
+    color: {"#f8fafc" if selected_theme == "Dark" else theme_color};
+}}
 
-.subtitle {
-    color: #667085;
+.subtitle {{
+    color: {"#cbd5e1" if selected_theme == "Dark" else "#667085"};
     font-size: 1.05rem;
     margin-bottom: 1.5rem;
-}
+}}
 
-[data-testid="stMetric"] {
-    background: #ffffff;
+h1, h2, h3, h4, h5, h6 {{
+    color: {"#f8fafc" if selected_theme == "Dark" else "#111827"} !important;
+}}
+
+p, div, span, label {{
+    color: {"#e5e7eb" if selected_theme == "Dark" else "#111827"};
+}}
+
+[data-testid="stMarkdownContainer"] {{
+    color: {"#e5e7eb" if selected_theme == "Dark" else "#111827"} !important;
+}}
+
+[data-testid="stText"] {{
+    color: {"#e5e7eb" if selected_theme == "Dark" else "#111827"} !important;
+}}
+
+[data-testid="stText"] pre {{
+    color: {"#e5e7eb" if selected_theme == "Dark" else "#111827"} !important;
+    background-color: {"#1e293b" if selected_theme == "Dark" else "#ffffff"} !important;
+    border: 1px solid {"#334155" if selected_theme == "Dark" else "#e6e8eb"};
+    border-radius: 12px;
+    padding: 16px;
+    white-space: pre-wrap;
+}}
+
+pre, code {{
+    color: {"#e5e7eb" if selected_theme == "Dark" else "#111827"} !important;
+    background-color: {"#1e293b" if selected_theme == "Dark" else "#ffffff"} !important;
+}}
+
+[data-testid="stMetric"] {{
+    background: {card_background};
     padding: 18px;
     border-radius: 14px;
-    border: 1px solid #e6e8eb;
+    border: 1px solid {"#334155" if selected_theme == "Dark" else "#e6e8eb"};
     box-shadow: 0 1px 6px rgba(16, 24, 40, 0.04);
-}
+}}
 
-.insight-box {
-    background: #f8fafc;
-    border-left: 5px solid #344054;
+[data-testid="stMetric"] label {{
+    color: {"#cbd5e1" if selected_theme == "Dark" else "#667085"} !important;
+}}
+
+[data-testid="stMetric"] [data-testid="stMetricValue"] {{
+    color: {"#f8fafc" if selected_theme == "Dark" else "#111827"} !important;
+}}
+
+[data-testid="stMetric"] [data-testid="stMetricDelta"] {{
+    color: {theme_color} !important;
+}}
+
+.insight-box {{
+    background: {card_background};
+    color: {"#e5e7eb" if selected_theme == "Dark" else "#111827"};
+    border-left: 5px solid {theme_color};
     border-radius: 14px;
     padding: 1.2rem;
     margin-top: 1rem;
     margin-bottom: 1rem;
-}
+    box-shadow: 0 1px 6px rgba(16, 24, 40, 0.04);
+}}
 
-mark {
+.stTabs [data-baseweb="tab"] {{
+    color: {"#cbd5e1" if selected_theme == "Dark" else "#667085"} !important;
+}}
+
+.stTabs [data-baseweb="tab"][aria-selected="true"] {{
+    color: {theme_color} !important;
+    border-bottom: 3px solid {theme_color};
+}}
+
+.stDownloadButton button {{
+    background-color: {card_background} !important;
+    border-color: {theme_color} !important;
+    color: {theme_color} !important;
+    border-radius: 10px;
+    font-weight: 600;
+}}
+
+div[data-baseweb="select"] > div {{
+    background-color: {card_background} !important;
+    color: {text_color} !important;
+    border: 1px solid {"#334155" if selected_theme == "Dark" else "#d1d5db"} !important;
+}}
+
+div[data-baseweb="select"] span {{
+    color: {text_color} !important;
+}}
+
+div[data-baseweb="popover"] {{
+    background-color: {card_background} !important;
+}}
+
+div[data-baseweb="popover"] * {{
+    color: {text_color} !important;
+    background-color: {card_background} !important;
+}}
+
+ul[role="listbox"] {{
+    background-color: {card_background} !important;
+}}
+
+ul[role="listbox"] li {{
+    color: {text_color} !important;
+    background-color: {card_background} !important;
+}}
+
+ul[role="listbox"] li:hover {{
+    background-color: {theme_color} !important;
+    color: {"#0f172a" if selected_theme == "Dark" else "#ffffff"} !important;
+}}
+
+mark {{
     background-color: #fff3b0;
+    color: #111827;
     padding: 2px 4px;
     border-radius: 4px;
-}
+}}
+
+.report-box {{
+    background-color: {card_background};
+    color: {text_color};
+    border: 1px solid {"#334155" if selected_theme == "Dark" else "#d1d5db"};
+    border-radius: 14px;
+    padding: 22px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -72,6 +271,83 @@ keyword_map = {
     "operations": ["supply chain", "disruption", "operations", "shortage"],
     "technology": ["cybersecurity", "data breach", "system failure", "technology"]
 }
+
+def themed_bar_chart(data_dict, title="Risk Change"):
+    chart_df = pd.DataFrame({
+        "Risk Category": list(data_dict.keys()),
+        "Change": list(data_dict.values())
+    })
+
+    fig = px.bar(
+        chart_df,
+        x="Risk Category",
+        y="Change",
+        color="Risk Category",
+        color_discrete_sequence=[theme_color] * len(chart_df)
+    )
+
+    fig.update_layout(
+        title=title,
+        plot_bgcolor=page_background,
+        paper_bgcolor=page_background,
+        font_color=text_color,
+        xaxis=dict(color=text_color),
+        yaxis=dict(color=text_color),
+        showlegend=False
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+def themed_count_chart(series, title="Risk Signal Distribution"):
+    chart_df = series.reset_index()
+    chart_df.columns = ["Risk Category", "Count"]
+
+    fig = px.bar(
+        chart_df,
+        x="Risk Category",
+        y="Count",
+        color="Risk Category",
+        color_discrete_sequence=[theme_color] * len(chart_df)
+    )
+
+    fig.update_layout(
+        title=title,
+        plot_bgcolor=page_background,
+        paper_bgcolor=page_background,
+        font_color=text_color,
+        xaxis=dict(color=text_color),
+        yaxis=dict(color=text_color),
+        showlegend=False
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+def themed_comparison_chart(comparison_chart_df):
+    df = comparison_chart_df.reset_index().melt(
+        id_vars="index",
+        var_name="Company Period",
+        value_name="Change"
+    ).rename(columns={"index": "Risk Category"})
+
+    fig = px.bar(
+        df,
+        x="Risk Category",
+        y="Change",
+        color="Company Period",
+        barmode="group",
+        color_discrete_sequence=[theme_color, secondary_chart_color]
+    )
+
+    fig.update_layout(
+        title="Side-by-Side Risk Change",
+        plot_bgcolor=page_background,
+        paper_bgcolor=page_background,
+        font_color=text_color,
+        xaxis=dict(color=text_color),
+        yaxis=dict(color=text_color)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 def build_risk_dict(row):
     return {col: int(row[col]) for col in risk_columns}
@@ -167,9 +443,11 @@ def highlight_keywords(text, risk_category):
     highlighted_text = text
 
     for keyword in keywords:
+        pattern = r"\b" + re.escape(keyword) + r"\b"
+
         highlighted_text = re.sub(
-            f"({re.escape(keyword)})",
-            r"<mark>\1</mark>",
+            pattern,
+            r"<mark>\g<0></mark>",
             highlighted_text,
             flags=re.IGNORECASE
         )
@@ -250,7 +528,7 @@ Review the evidence snippets and determine whether the changes reflect company-s
 
 def make_single_report_text(company, row, risk_change):
     return f"""
-Lumen Credit Risk Agent Report
+Lumen Financial Risk Agent Report
 
 Company: {company}
 Filing Type: {row['filing_type']}
@@ -269,7 +547,7 @@ The strongest narrative increase is in {row['top_increase']} risk. This should b
 
 def make_comparison_report_text(company_a, row_a, risk_a, company_b, row_b, risk_b):
     return f"""
-Lumen Company Comparison Report
+Lumen Financial Risk Agent Comparison Report
 
 Company A: {company_a}
 Filing Type A: {row_a['filing_type']}
@@ -347,7 +625,7 @@ with tab1:
 
         with left:
             st.markdown("#### Risk Signal Distribution")
-            st.bar_chart(filtered_df["top_increase"].value_counts())
+            themed_count_chart(filtered_df["top_increase"].value_counts())
 
         with right:
             st.markdown(f"#### Top {selected_signal.title()} Risk Increases")
@@ -398,7 +676,7 @@ with tab2:
         c3.metric("Signal Strength", risk_level(risk_change[row["top_increase"]]))
 
         st.markdown("#### Risk Change Chart")
-        st.bar_chart(risk_change)
+        themed_bar_chart(risk_change, "Risk Change Chart")
 
         st.markdown(build_single_insight(selected_company, row, risk_change), unsafe_allow_html=True)
 
@@ -419,7 +697,13 @@ with tab2:
         report_text = make_single_report_text(selected_company, row, risk_change)
 
         st.markdown("#### Exportable Report")
-        st.text(report_text)
+        
+        report_class = "report-box"
+
+        st.markdown(
+            f'<div class="{report_class}">{report_text}</div>',
+            unsafe_allow_html=True
+        )
 
         st.download_button(
             label="Export Single Company Report",
@@ -480,7 +764,7 @@ with tab3:
         })
 
         st.markdown("#### Side-by-Side Risk Change")
-        st.bar_chart(comparison_chart_df)
+        themed_comparison_chart(comparison_chart_df)
 
         st.markdown(
             build_comparison_insight(company_a, row_a, risk_a, company_b, row_b, risk_b),
@@ -524,7 +808,13 @@ with tab3:
         report_text = make_comparison_report_text(company_a, row_a, risk_a, company_b, row_b, risk_b)
 
         st.markdown("#### Exportable Comparison Report")
-        st.text(report_text)
+        
+        report_class = "report-box"
+
+        st.markdown(
+            f'<div class="{report_class}">{report_text}</div>',
+            unsafe_allow_html=True
+        )
 
         st.download_button(
             label="Export Comparison Report",
