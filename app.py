@@ -6,6 +6,14 @@ from bs4 import BeautifulSoup
 
 st.set_page_config(page_title="Lumen Financial Risk Agent", layout="wide")
 
+st.set_page_config(
+    page_title="Lumen Financial Risk Agent",
+    layout="wide"
+)
+
+st.markdown('<div class="main-title">Lumen Financial Risk Agent</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">AI-assisted narrative risk screening for SEC 10-K and 10-Q disclosures.</div>', unsafe_allow_html=True)
+
 st.markdown("""
 <style>
 .block-container { padding-top: 2rem; }
