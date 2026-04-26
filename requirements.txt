@@ -1,3 +1,6 @@
 streamlit
 pandas
 beautifulsoup4
+altair
+plotly
+blinker
