@@ -4,21 +4,27 @@ import pandas as pd
 import streamlit as st
 from bs4 import BeautifulSoup
 
-st.set_page_config(page_title="Lumen Financial Risk Agent", layout="wide")
-
 st.set_page_config(
     page_title="Lumen Financial Risk Agent",
     layout="wide"
 )
 
-st.markdown('<div class="main-title">Lumen Financial Risk Agent</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">AI-assisted narrative risk screening for SEC 10-K and 10-Q disclosures.</div>', unsafe_allow_html=True)
-
 st.markdown("""
 <style>
 .block-container { padding-top: 2rem; }
-.main-title { font-size: 2.8rem; font-weight: 800; margin-bottom: 0.2rem; }
-.subtitle { color: #667085; font-size: 1.05rem; margin-bottom: 1.5rem; }
+
+.main-title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    margin-bottom: 0.2rem;
+}
+
+.subtitle {
+    color: #667085;
+    font-size: 1.05rem;
+    margin-bottom: 1.5rem;
+}
+
 [data-testid="stMetric"] {
     background: #ffffff;
     padding: 18px;
@@ -26,6 +32,7 @@ st.markdown("""
     border: 1px solid #e6e8eb;
     box-shadow: 0 1px 6px rgba(16, 24, 40, 0.04);
 }
+
 .insight-box {
     background: #f8fafc;
     border-left: 5px solid #344054;
@@ -34,6 +41,7 @@ st.markdown("""
     margin-top: 1rem;
     margin-bottom: 1rem;
 }
+
 mark {
     background-color: #fff3b0;
     padding: 2px 4px;
@@ -284,12 +292,6 @@ Top Decrease B: {row_b['top_decrease']}
 Agent Interpretation:
 This comparison highlights narrative risk changes across two selected company-period pairs. It should be used as a screening signal before deeper human review.
 """
-
-st.markdown('<div class="main-title">Lumen Credit Risk Agent</div>', unsafe_allow_html=True)
-st.markdown(
-    '<div class="subtitle">AI-assisted narrative risk screening for SEC 10-K and 10-Q disclosures.</div>',
-    unsafe_allow_html=True
-)
 
 st.sidebar.title("Control Panel")
 
