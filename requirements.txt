@@ -4,3 +4,5 @@ beautifulsoup4
 altair
 plotly
 blinker
+sec-edgar-downloader
+matplotlib

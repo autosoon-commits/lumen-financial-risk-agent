@@ -5,20 +5,53 @@ import pandas as pd
 import streamlit as st
 from bs4 import BeautifulSoup
 import plotly.express as px
+import plotly.graph_objects as go
 
-st.set_page_config(
-    page_title="Lumen Financial Risk Agent",
-    layout="wide"
-)
+st.set_page_config(page_title="Lumen Financial Risk Agent", layout="wide")
 
 theme_options = {
-    "White": {"accent": "#111827", "background": "#ffffff", "card": "#ffffff", "text": "#111827"},
-    "Navy": {"accent": "#1F4E79", "background": "#eef5fb", "card": "#ffffff", "text": "#111827"},
-    "Green": {"accent": "#047857", "background": "#ecfdf5", "card": "#ffffff", "text": "#111827"},
-    "Purple": {"accent": "#6D28D9", "background": "#f5f3ff", "card": "#ffffff", "text": "#111827"},
-    "Burgundy": {"accent": "#9F1239", "background": "#fff1f2", "card": "#ffffff", "text": "#111827"},
-    "Gold": {"accent": "#B7791F", "background": "#fffbeb", "card": "#ffffff", "text": "#111827"},
-    "Dark": {"accent": "#60A5FA", "background": "#0f172a", "card": "#1e293b", "text": "#f1f5f9"}
+    "White": {
+        "accent": "#111827",
+        "background": "#ffffff",
+        "card": "#ffffff",
+        "text": "#111827",
+    },
+    "Navy": {
+        "accent": "#1F4E79",
+        "background": "#eef5fb",
+        "card": "#ffffff",
+        "text": "#111827",
+    },
+    "Green": {
+        "accent": "#047857",
+        "background": "#ecfdf5",
+        "card": "#ffffff",
+        "text": "#111827",
+    },
+    "Purple": {
+        "accent": "#6D28D9",
+        "background": "#f5f3ff",
+        "card": "#ffffff",
+        "text": "#111827",
+    },
+    "Burgundy": {
+        "accent": "#9F1239",
+        "background": "#fff1f2",
+        "card": "#ffffff",
+        "text": "#111827",
+    },
+    "Gold": {
+        "accent": "#B7791F",
+        "background": "#fffbeb",
+        "card": "#ffffff",
+        "text": "#111827",
+    },
+    "Dark": {
+        "accent": "#60A5FA",
+        "background": "#0f172a",
+        "card": "#1e293b",
+        "text": "#f1f5f9",
+    },
 }
 
 selected_theme = st.sidebar.selectbox("Choose Theme", list(theme_options.keys()))
@@ -29,8 +62,11 @@ page_background = theme["background"]
 card_background = theme["card"]
 text_color = theme["text"]
 secondary_chart_color = "#64748b" if selected_theme == "Dark" else "#9ca3af"
+grid_color = "#334155" if selected_theme == "Dark" else "#e5e7eb"
+legend_bg = "#0f172a" if selected_theme == "Dark" else "#ffffff"
 
-st.markdown(f"""
+st.markdown(
+    f"""
 <style>
 .stApp {{
     background-color: {page_background};
@@ -172,7 +208,9 @@ mark {{
     white-space: pre-wrap;
 }}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 st.markdown(
     """
@@ -182,7 +220,7 @@ st.markdown(
     enabling structured comparison, trend detection, and evidence-based insights.
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 portfolio_df = pd.read_csv("portfolio_risk_comparison.csv")
@@ -194,53 +232,45 @@ keyword_map = {
     "financial": ["liquidity", "debt", "cash flow", "revenue", "costs"],
     "market": ["competition", "demand", "decline", "market"],
     "operations": ["supply chain", "disruption", "operations", "shortage"],
-    "technology": ["cybersecurity", "data breach", "system failure", "technology"]
+    "technology": ["cybersecurity", "data breach", "system failure", "technology"],
 }
+
 
 def update_chart_layout(fig, title, df, y_col):
     fig.update_layout(
-        title=title,
+        title=dict(text=title, font=dict(color=text_color, size=20)),
         plot_bgcolor=page_background,
         paper_bgcolor=page_background,
-        font_color=text_color,
-        xaxis=dict(color=text_color),
-        yaxis=dict(color=text_color),
-        showlegend=True
+        font=dict(color=text_color),
+        xaxis=dict(color=text_color, gridcolor=grid_color, zerolinecolor=grid_color),
+        yaxis=dict(color=text_color, gridcolor=grid_color, zerolinecolor=grid_color),
+        legend=dict(
+            font=dict(color=text_color),
+            bgcolor=legend_bg,
+            bordercolor=grid_color,
+            borderwidth=1,
+        ),
     )
 
-    fig.add_hline(
-        y=0,
-        line_dash="dash",
-        line_color="gray"
-    )
+    fig.add_hline(y=0, line_dash="dash", line_color="#94a3b8")
 
-    fig.update_yaxes(
-        range=[
-            min(df[y_col].min(), -1),
-            max(df[y_col].max(), 1)
-        ]
-    )
+    fig.update_yaxes(range=[min(df[y_col].min(), -1), max(df[y_col].max(), 1)])
 
     return fig
 
+
 def themed_risk_chart(data_dict, title="Risk Change", chart_type="Bar Chart"):
-    chart_df = pd.DataFrame({
-        "Risk Category": list(data_dict.keys()),
-        "Change": list(data_dict.values())
-    })
+    chart_df = pd.DataFrame(
+        {"Risk Category": list(data_dict.keys()), "Change": list(data_dict.values())}
+    )
 
     if chart_type == "Line Chart":
-        fig = px.line(
-            chart_df,
-            x="Risk Category",
-            y="Change",
-            markers=True
-        )
+        fig = px.line(chart_df, x="Risk Category", y="Change", markers=True)
         fig.update_traces(
             line_color=theme_color,
             marker_color=theme_color,
             text=chart_df["Change"],
-            textposition="top center"
+            textposition="top center",
         )
     else:
         fig = px.bar(
@@ -249,18 +279,16 @@ def themed_risk_chart(data_dict, title="Risk Change", chart_type="Bar Chart"):
             y="Change",
             text="Change",
             color="Risk Category",
-            color_discrete_sequence=[theme_color] * len(chart_df)
+            color_discrete_sequence=[theme_color] * len(chart_df),
         )
-        fig.update_traces(
-            textposition="outside",
-            cliponaxis=False
-        )
+        fig.update_traces(textposition="outside", cliponaxis=False)
 
     fig = update_chart_layout(fig, title, chart_df, "Change")
     fig.update_layout(showlegend=False)
 
     st.plotly_chart(fig, use_container_width=True)
     st.caption("A value of 0 means no detected change, not missing data.")
+
 
 def themed_count_chart(series, title="Risk Signal Distribution"):
     chart_df = series.reset_index()
@@ -272,13 +300,10 @@ def themed_count_chart(series, title="Risk Signal Distribution"):
         y="Count",
         text="Count",
         color="Risk Category",
-        color_discrete_sequence=[theme_color] * len(chart_df)
+        color_discrete_sequence=[theme_color] * len(chart_df),
     )
 
-    fig.update_traces(
-        textposition="outside",
-        cliponaxis=False
-    )
+    fig.update_traces(textposition="outside", cliponaxis=False)
 
     fig.update_layout(
         title=title,
@@ -287,24 +312,22 @@ def themed_count_chart(series, title="Risk Signal Distribution"):
         font_color=text_color,
         xaxis=dict(color=text_color),
         yaxis=dict(color=text_color),
-        showlegend=False
+        showlegend=False,
     )
 
     fig.update_yaxes(
-        range=[
-            min(chart_df["Count"].min(), 0),
-            max(chart_df["Count"].max(), 1)
-        ]
+        range=[min(chart_df["Count"].min(), 0), max(chart_df["Count"].max(), 1)]
     )
 
     st.plotly_chart(fig, use_container_width=True)
 
+
 def themed_comparison_chart(comparison_chart_df, chart_type="Bar Chart"):
-    df = comparison_chart_df.reset_index().melt(
-        id_vars="index",
-        var_name="Company Period",
-        value_name="Change"
-    ).rename(columns={"index": "Risk Category"})
+    df = (
+        comparison_chart_df.reset_index()
+        .melt(id_vars="index", var_name="Company Period", value_name="Change")
+        .rename(columns={"index": "Risk Category"})
+    )
 
     if chart_type == "Line Chart":
         fig = px.line(
@@ -313,7 +336,7 @@ def themed_comparison_chart(comparison_chart_df, chart_type="Bar Chart"):
             y="Change",
             color="Company Period",
             markers=True,
-            color_discrete_sequence=[theme_color, secondary_chart_color]
+            color_discrete_sequence=[theme_color, secondary_chart_color],
         )
     else:
         fig = px.bar(
@@ -323,20 +346,19 @@ def themed_comparison_chart(comparison_chart_df, chart_type="Bar Chart"):
             color="Company Period",
             barmode="group",
             text="Change",
-            color_discrete_sequence=[theme_color, secondary_chart_color]
+            color_discrete_sequence=[theme_color, secondary_chart_color],
         )
-        fig.update_traces(
-            textposition="outside",
-            cliponaxis=False
-        )
+        fig.update_traces(textposition="outside", cliponaxis=False)
 
     fig = update_chart_layout(fig, "Side-by-Side Risk Change", df, "Change")
 
     st.plotly_chart(fig, use_container_width=True)
     st.caption("A value of 0 means no detected change, not missing data.")
 
+
 def build_risk_dict(row):
     return {col: int(row[col]) for col in risk_columns}
+
 
 def risk_level(value):
     value = abs(int(value))
@@ -348,8 +370,10 @@ def risk_level(value):
         return "Low"
     return "No material change"
 
+
 def filing_folder(filing_type):
     return filing_type.replace("-", "")
+
 
 def extract_date(file_name):
     parts = file_name.split("_")
@@ -358,8 +382,10 @@ def extract_date(file_name):
             return part[:10]
     return "Unknown"
 
+
 def display_period_label(row):
     return f"{extract_date(row['older_file'])} → {extract_date(row['newer_file'])}"
+
 
 def extract_text_from_file(file_path):
     if not os.path.exists(file_path):
@@ -377,6 +403,7 @@ def extract_text_from_file(file_path):
     text = " ".join(text.split())
     return text
 
+
 def get_positions(lower_text):
     positions = []
     start = 0
@@ -389,6 +416,7 @@ def get_positions(lower_text):
         start = position + 1
 
     return positions
+
 
 def extract_risk_factors_section(clean_text):
     lower_text = clean_text.lower()
@@ -407,6 +435,7 @@ def extract_risk_factors_section(clean_text):
         return ""
 
     return clean_text[start:end]
+
 
 def extract_evidence_snippets(file_name, filing_type, risk_category, max_paragraphs=8):
     folder = filing_folder(filing_type)
@@ -432,7 +461,12 @@ def extract_evidence_snippets(file_name, filing_type, risk_category, max_paragra
         if len(results) >= max_paragraphs:
             break
 
-    return results if results else ["No direct evidence snippet found for this risk category."]
+    return (
+        results
+        if results
+        else ["No direct evidence snippet found for this risk category."]
+    )
+
 
 def highlight_keywords(text, risk_category):
     keywords = keyword_map.get(risk_category, [risk_category])
@@ -442,13 +476,11 @@ def highlight_keywords(text, risk_category):
         pattern = r"\b" + re.escape(keyword) + r"\b"
 
         highlighted_text = re.sub(
-            pattern,
-            r"<mark>\g<0></mark>",
-            highlighted_text,
-            flags=re.IGNORECASE
+            pattern, r"<mark>\g<0></mark>", highlighted_text, flags=re.IGNORECASE
         )
 
     return highlighted_text
+
 
 def build_single_insight(company, row, risk_change):
     top_increase = row["top_increase"]
@@ -488,6 +520,7 @@ The largest decline is in **{top_decrease} risk**, changing by **{decrease_value
 </div>
 """
 
+
 def build_comparison_insight(company_a, row_a, risk_a, company_b, row_b, risk_b):
     top_a = row_a["top_increase"]
     top_b = row_b["top_increase"]
@@ -522,6 +555,7 @@ Review the evidence snippets and determine whether the changes reflect company-s
 </div>
 """
 
+
 def make_single_report_text(company, row, risk_change):
     return f"""
 Lumen Financial Risk Agent Report
@@ -540,6 +574,7 @@ Signal Strength: {risk_level(risk_change[row['top_increase']])}
 Agent Interpretation:
 The strongest narrative increase is in {row['top_increase']} risk. This should be treated as an early screening signal and validated through human review.
 """
+
 
 def make_comparison_report_text(company_a, row_a, risk_a, company_b, row_b, risk_b):
     return f"""
@@ -567,32 +602,24 @@ Agent Interpretation:
 This comparison highlights narrative risk changes across two selected company-period pairs. It should be used as a screening signal before deeper human review.
 """
 
+
 st.sidebar.title("Control Panel")
 
 filing_type_filter = st.sidebar.selectbox(
-    "Filing Type",
-    sorted(portfolio_df["filing_type"].unique())
+    "Filing Type", sorted(portfolio_df["filing_type"].unique())
 )
 
-selected_signal = st.sidebar.selectbox(
-    "Focus Risk Category",
-    risk_columns
-)
+selected_signal = st.sidebar.selectbox("Focus Risk Category", risk_columns)
 
 min_year = int(portfolio_df["older_year"].min())
 max_year = int(portfolio_df["newer_year"].max())
 
-year_range = st.sidebar.slider(
-    "Year Range",
-    min_year,
-    max_year,
-    (min_year, max_year)
-)
+year_range = st.sidebar.slider("Year Range", min_year, max_year, (min_year, max_year))
 
 filtered_df = portfolio_df[
-    (portfolio_df["filing_type"] == filing_type_filter) &
-    (portfolio_df["older_year"] >= year_range[0]) &
-    (portfolio_df["newer_year"] <= year_range[1])
+    (portfolio_df["filing_type"] == filing_type_filter)
+    & (portfolio_df["older_year"] >= year_range[0])
+    & (portfolio_df["newer_year"] <= year_range[1])
 ]
 
 col1, col2, col3, col4 = st.columns(4)
@@ -602,14 +629,12 @@ col2.metric("Companies Covered", filtered_df["company"].nunique())
 col3.metric("Total Comparisons", len(filtered_df))
 col4.metric(
     f"Largest {selected_signal} Increase",
-    int(filtered_df[selected_signal].max()) if not filtered_df.empty else 0
+    int(filtered_df[selected_signal].max()) if not filtered_df.empty else 0,
 )
 
-tab1, tab2, tab3 = st.tabs([
-    "Portfolio Dashboard",
-    "Single Filing Review",
-    "Company Comparison"
-])
+tab1, tab2, tab3 = st.tabs(
+    ["Portfolio Dashboard", "Single Filing Review", "Company Comparison"]
+)
 
 with tab1:
     st.subheader("Portfolio-Level Signal Summary")
@@ -627,7 +652,7 @@ with tab1:
             st.markdown(f"#### Top {selected_signal.title()} Risk Increases")
             st.dataframe(
                 filtered_df.sort_values(selected_signal, ascending=False).head(10),
-                use_container_width=True
+                use_container_width=True,
             )
 
         st.markdown("#### Full Portfolio Table")
@@ -637,7 +662,7 @@ with tab1:
             label="Export Portfolio CSV",
             data=filtered_df.to_csv(index=False),
             file_name=f"lumen_{filing_type_filter}_portfolio_risk_summary.csv",
-            mime="text/csv"
+            mime="text/csv",
         )
 
 with tab2:
@@ -649,22 +674,37 @@ with tab2:
         companies = sorted(filtered_df["company"].unique())
 
         selected_company = st.selectbox(
-            "Select Company",
-            companies,
-            key="single_company"
+            "Select Company", companies, key="single_company"
         )
 
         company_df = filtered_df[filtered_df["company"] == selected_company]
+        period_options = list(company_df.index)
 
-        selected_row = st.selectbox(
-            "Select Period",
-            company_df.index,
+        from_row = st.selectbox(
+            "From Period",
+            period_options,
             format_func=lambda i: display_period_label(company_df.loc[i]),
-            key="single_period"
+            key="tab2_from_period",
         )
 
-        row = filtered_df.loc[selected_row]
-        risk_change = build_risk_dict(row)
+        to_row = st.selectbox(
+            "To Period",
+            period_options,
+            index=len(period_options) - 1,
+            format_func=lambda i: display_period_label(company_df.loc[i]),
+            key="tab2_to_period",
+        )
+
+        start_pos = period_options.index(from_row)
+        end_pos = period_options.index(to_row)
+
+        if start_pos > end_pos:
+            st.warning("From Period should be earlier than To Period.")
+            st.stop()
+
+        selected_rows = company_df.loc[period_options[start_pos : end_pos + 1]]
+        risk_change = {col: int(selected_rows[col].sum()) for col in risk_columns}
+        row = selected_rows.iloc[-1]
 
         c1, c2, c3 = st.columns(3)
         c1.metric("Top Increase", row["top_increase"], risk_change[row["top_increase"]])
@@ -677,25 +717,69 @@ with tab2:
             "Choose Chart Type",
             ["Bar Chart", "Line Chart"],
             horizontal=True,
-            key="single_chart_type"
+            key="tab2_chart_type",
         )
 
-        themed_risk_chart(risk_change, "Risk Change Chart", single_chart_type)
+        if len(selected_rows) == 1:
+            themed_risk_chart(risk_change, "Risk Change Chart", single_chart_type)
+        else:
+            multi_period_df = selected_rows[
+                ["older_year", "newer_year"] + risk_columns
+            ].copy()
 
-        st.markdown(build_single_insight(selected_company, row, risk_change), unsafe_allow_html=True)
+            multi_period_df["Period"] = (
+                multi_period_df["older_year"].astype(str)
+                + " → "
+                + multi_period_df["newer_year"].astype(str)
+            )
+
+            chart_df = multi_period_df.melt(
+                id_vars="Period",
+                value_vars=risk_columns,
+                var_name="Risk Category",
+                value_name="Change",
+            )
+
+            if single_chart_type == "Line Chart":
+                fig = px.line(
+                    chart_df,
+                    x="Period",
+                    y="Change",
+                    color="Risk Category",
+                    markers=True,
+                )
+            else:
+                fig = px.bar(
+                    chart_df,
+                    x="Risk Category",
+                    y="Change",
+                    color="Period",
+                    barmode="group",
+                    text="Change",
+                )
+                fig.update_traces(textposition="outside", cliponaxis=False)
+
+            fig = update_chart_layout(
+                fig, "Multi-Period Risk Change", chart_df, "Change"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            st.caption("A value of 0 means no detected change, not missing data.")
+
+        st.markdown(
+            build_single_insight(selected_company, row, risk_change),
+            unsafe_allow_html=True,
+        )
 
         st.markdown("#### Evidence View")
         snippets = extract_evidence_snippets(
-            row["newer_file"],
-            row["filing_type"],
-            row["top_increase"]
+            row["newer_file"], row["filing_type"], row["top_increase"]
         )
 
         for i, snippet in enumerate(snippets, 1):
             with st.expander(f"Evidence Snippet {i} — {row['top_increase']} risk"):
                 st.markdown(
                     highlight_keywords(snippet, row["top_increase"]),
-                    unsafe_allow_html=True
+                    unsafe_allow_html=True,
                 )
 
         report_text = make_single_report_text(selected_company, row, risk_change)
@@ -704,15 +788,14 @@ with tab2:
         report_class = "report-box"
 
         st.markdown(
-            f'<div class="{report_class}">{report_text}</div>',
-            unsafe_allow_html=True
+            f'<div class="{report_class}">{report_text}</div>', unsafe_allow_html=True
         )
 
         st.download_button(
             label="Export Single Company Report",
             data=report_text,
             file_name=f"{selected_company}_{filing_type_filter}_risk_report.txt",
-            mime="text/plain"
+            mime="text/plain",
         )
 
 with tab3:
@@ -733,7 +816,7 @@ with tab3:
                 "Company A Period",
                 company_a_df.index,
                 format_func=lambda i: display_period_label(company_a_df.loc[i]),
-                key="period_a"
+                key="period_a",
             )
 
         with right:
@@ -744,7 +827,7 @@ with tab3:
                 "Company B Period",
                 company_b_df.index,
                 format_func=lambda i: display_period_label(company_b_df.loc[i]),
-                key="period_b"
+                key="period_b",
             )
 
         row_a = filtered_df.loc[row_a_index]
@@ -754,32 +837,205 @@ with tab3:
         risk_b = build_risk_dict(row_b)
 
         c1, c2, c3 = st.columns(3)
-        c1.metric(f"{company_a} Top Increase", row_a["top_increase"], risk_a[row_a["top_increase"]])
-        c2.metric(f"{company_b} Top Increase", row_b["top_increase"], risk_b[row_b["top_increase"]])
+        c1.metric(
+            f"{company_a} Top Increase",
+            row_a["top_increase"],
+            risk_a[row_a["top_increase"]],
+        )
+        c2.metric(
+            f"{company_b} Top Increase",
+            row_b["top_increase"],
+            risk_b[row_b["top_increase"]],
+        )
         c3.metric(
             "Stronger Signal",
-            company_a if risk_a[row_a["top_increase"]] >= risk_b[row_b["top_increase"]] else company_b
+            (
+                company_a
+                if risk_a[row_a["top_increase"]] >= risk_b[row_b["top_increase"]]
+                else company_b
+            ),
         )
 
-        comparison_chart_df = pd.DataFrame({
-            f"{company_a} {row_a['older_year']}→{row_a['newer_year']}": risk_a,
-            f"{company_b} {row_b['older_year']}→{row_b['newer_year']}": risk_b
-        })
+        comparison_chart_df = pd.DataFrame(
+            {
+                f"{company_a} {display_period_label(row_a)}": risk_a,
+                f"{company_b} {display_period_label(row_b)}": risk_b,
+            }
+        )
 
         st.markdown("#### Side-by-Side Risk Change")
 
         comparison_chart_type = st.radio(
             "Choose Comparison Chart Type",
-            ["Bar Chart", "Line Chart"],
+            ["Bar Chart", "Radar Chart", "Difference Chart", "Heatmap"],
             horizontal=True,
-            key="comparison_chart_type"
+            key="comparison_chart_type",
         )
 
-        themed_comparison_chart(comparison_chart_df, comparison_chart_type)
+        if comparison_chart_type == "Bar Chart":
+            themed_comparison_chart(comparison_chart_df, "Bar Chart")
+
+        elif comparison_chart_type == "Radar Chart":
+            categories = risk_columns
+
+            fig = go.Figure()
+
+            fig.add_trace(
+                go.Scatterpolar(
+                    r=[risk_a[col] for col in categories],
+                    theta=categories,
+                    fill="toself",
+                    name=f"{company_a} {display_period_label(row_a)}",
+                    line=dict(color=theme_color, width=3),
+                    marker=dict(color=theme_color),
+                )
+            )
+
+            fig.add_trace(
+                go.Scatterpolar(
+                    r=[risk_b[col] for col in categories],
+                    theta=categories,
+                    fill="toself",
+                    name=f"{company_b} {display_period_label(row_b)}",
+                    line=dict(color=secondary_chart_color, width=3),
+                    marker=dict(color=secondary_chart_color),
+                )
+            )
+
+            fig.update_layout(
+                title=dict(
+                    text="Risk Structure Radar View",
+                    font=dict(color=text_color, size=20),
+                ),
+                paper_bgcolor=page_background,
+                plot_bgcolor=page_background,
+                font=dict(color=text_color),
+                polar=dict(
+                    bgcolor=page_background,
+                    radialaxis=dict(
+                        visible=True,
+                        color=text_color,
+                        gridcolor=grid_color,
+                        tickfont=dict(color=text_color),
+                    ),
+                    angularaxis=dict(
+                        color=text_color,
+                        gridcolor=grid_color,
+                        tickfont=dict(color=text_color),
+                    ),
+                ),
+                legend=dict(
+                    font=dict(color=text_color),
+                    bgcolor=legend_bg,
+                    bordercolor=grid_color,
+                    borderwidth=1,
+                ),
+                showlegend=True,
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+        elif comparison_chart_type == "Difference Chart":
+            diff = {col: risk_a[col] - risk_b[col] for col in risk_columns}
+
+            diff_df = pd.DataFrame(
+                {
+                    "Risk Category": list(diff.keys()),
+                    "Difference": list(diff.values()),
+                }
+            )
+
+            fig = px.bar(
+                diff_df,
+                x="Risk Category",
+                y="Difference",
+                text="Difference",
+                color="Difference",
+                color_continuous_scale="RdBu",
+            )
+
+            fig.update_traces(textposition="outside", cliponaxis=False)
+
+            fig.update_layout(
+                title=dict(
+                    text=f"Difference Chart: {company_a} minus {company_b}",
+                    font=dict(color=text_color, size=20),
+                ),
+                plot_bgcolor=page_background,
+                paper_bgcolor=page_background,
+                font=dict(color=text_color),
+                xaxis=dict(
+                    color=text_color,
+                    gridcolor=grid_color,
+                    zerolinecolor=grid_color,
+                ),
+                yaxis=dict(
+                    color=text_color,
+                    gridcolor=grid_color,
+                    zerolinecolor=grid_color,
+                ),
+                coloraxis_colorbar=dict(
+                    tickfont=dict(color=text_color),
+                    title=dict(font=dict(color=text_color)),
+                ),
+                showlegend=False,
+            )
+
+            fig.add_hline(
+                y=0,
+                line_dash="dash",
+                line_color="#94a3b8",
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+            st.caption(
+                f"Positive values mean {company_a} is higher. Negative values mean {company_b} is higher."
+            )
+
+        elif comparison_chart_type == "Heatmap":
+            heatmap_df = pd.DataFrame(
+                {
+                    company_a: risk_a,
+                    company_b: risk_b,
+                }
+            )
+
+            fig = px.imshow(
+                heatmap_df,
+                text_auto=True,
+                aspect="auto",
+                color_continuous_scale="Blues",
+            )
+
+            fig.update_layout(
+                title=dict(
+                    text="Risk Signal Heatmap",
+                    font=dict(color=text_color, size=20),
+                ),
+                paper_bgcolor=page_background,
+                plot_bgcolor=page_background,
+                font=dict(color=text_color),
+                xaxis=dict(
+                    color=text_color,
+                    tickfont=dict(color=text_color),
+                ),
+                yaxis=dict(
+                    color=text_color,
+                    tickfont=dict(color=text_color),
+                ),
+                coloraxis_colorbar=dict(
+                    tickfont=dict(color=text_color),
+                    title=dict(font=dict(color=text_color)),
+                ),
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
 
         st.markdown(
-            build_comparison_insight(company_a, row_a, risk_a, company_b, row_b, risk_b),
-            unsafe_allow_html=True
+            build_comparison_insight(
+                company_a, row_a, risk_a, company_b, row_b, risk_b
+            ),
+            unsafe_allow_html=True,
         )
 
         st.markdown("#### Evidence View")
@@ -791,14 +1047,14 @@ with tab3:
             snippets_a = extract_evidence_snippets(
                 row_a["newer_file"],
                 row_a["filing_type"],
-                row_a["top_increase"]
+                row_a["top_increase"],
             )
 
             for i, snippet in enumerate(snippets_a, 1):
                 with st.expander(f"{company_a} Evidence {i}"):
                     st.markdown(
                         highlight_keywords(snippet, row_a["top_increase"]),
-                        unsafe_allow_html=True
+                        unsafe_allow_html=True,
                     )
 
         with ev2:
@@ -806,29 +1062,31 @@ with tab3:
             snippets_b = extract_evidence_snippets(
                 row_b["newer_file"],
                 row_b["filing_type"],
-                row_b["top_increase"]
+                row_b["top_increase"],
             )
 
             for i, snippet in enumerate(snippets_b, 1):
                 with st.expander(f"{company_b} Evidence {i}"):
                     st.markdown(
                         highlight_keywords(snippet, row_b["top_increase"]),
-                        unsafe_allow_html=True
+                        unsafe_allow_html=True,
                     )
 
-        report_text = make_comparison_report_text(company_a, row_a, risk_a, company_b, row_b, risk_b)
+        report_text = make_comparison_report_text(
+            company_a, row_a, risk_a, company_b, row_b, risk_b
+        )
 
         st.markdown("#### Exportable Comparison Report")
         report_class = "report-box"
 
         st.markdown(
             f'<div class="{report_class}">{report_text}</div>',
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
         st.download_button(
             label="Export Comparison Report",
             data=report_text,
             file_name=f"{company_a}_vs_{company_b}_{filing_type_filter}_comparison_report.txt",
-            mime="text/plain"
+            mime="text/plain",
         )
