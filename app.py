@@ -607,51 +607,86 @@ Review the evidence snippets and determine whether the changes reflect company-s
 """
 
 
+import textwrap
+
 def make_single_report_text(company, row, risk_change):
-    return f"""
-Lumen Financial Risk Agent Report
+    top_increase = row["top_increase"]
+    top_decrease = row["top_decrease"]
 
-Company: {company}
-Filing Type: {row['filing_type']}
-Period: {row['older_year']} → {row['newer_year']}
+    increase_value = risk_change[top_increase]
+    decrease_value = risk_change[top_decrease]
 
-Risk Change:
-{risk_change}
+    return textwrap.dedent(f"""\
+    Lumen Financial Risk Agent
+    Single Company Narrative Risk Brief
 
-Top Increase: {row['top_increase']}
-Top Decrease: {row['top_decrease']}
-Signal Strength: {risk_level(risk_change[row['top_increase']])}
+    Company: {company}
+    Filing Type: {row['filing_type']}
+    Review Period: {row['older_year']} → {row['newer_year']}
 
-Agent Interpretation:
-The strongest narrative increase is in {row['top_increase']} risk. This should be treated as an early screening signal and validated through human review.
-"""
+    Executive Takeaway:
+    {company} shows the strongest upward narrative signal in {top_increase} risk during the selected reporting period.
+
+    Key Risk Movement:
+    • Top Increase: {top_increase} risk ({increase_value})
+    • Top Decrease: {top_decrease} risk ({decrease_value})
+    • Signal Strength: {risk_level(increase_value)}
+
+    Interpretation:
+    The increase in {top_increase} risk suggests that this topic became more prominent in the company’s disclosure language. This should be treated as an early screening signal rather than a final credit conclusion.
+
+    Analyst Review Priorities:
+    • Review highlighted evidence snippets from the filing
+    • Compare wording against the prior reporting period
+    • Validate with financials and external context
+
+    Decision Support Note:
+    This brief converts unstructured filings into fast, explainable risk signals.
+    """)
 
 
 def make_comparison_report_text(company_a, row_a, risk_a, company_b, row_b, risk_b):
-    return f"""
-Lumen Financial Risk Agent Comparison Report
+    top_a = row_a["top_increase"]
+    top_b = row_b["top_increase"]
 
-Company A: {company_a}
-Filing Type A: {row_a['filing_type']}
-Period A: {row_a['older_year']} → {row_a['newer_year']}
-Risk Change A:
-{risk_a}
+    value_a = risk_a[top_a]
+    value_b = risk_b[top_b]
 
-Top Increase A: {row_a['top_increase']}
-Top Decrease A: {row_a['top_decrease']}
+    stronger_company = company_a if value_a >= value_b else company_b
+    stronger_risk = top_a if value_a >= value_b else top_b
+    stronger_value = max(value_a, value_b)
 
-Company B: {company_b}
-Filing Type B: {row_b['filing_type']}
-Period B: {row_b['older_year']} → {row_b['newer_year']}
-Risk Change B:
-{risk_b}
+    return textwrap.dedent(f"""\
+    Lumen Financial Risk Agent
+    Company Comparison Narrative Risk Brief
 
-Top Increase B: {row_b['top_increase']}
-Top Decrease B: {row_b['top_decrease']}
+    Company A: {company_a}
+    Period A: {row_a['older_year']} → {row_a['newer_year']}
+    Filing Type A: {row_a['filing_type']}
 
-Agent Interpretation:
-This comparison highlights narrative risk changes across two selected company-period pairs. It should be used as a screening signal before deeper human review.
-"""
+    Company B: {company_b}
+    Period B: {row_b['older_year']} → {row_b['newer_year']}
+    Filing Type B: {row_b['filing_type']}
+
+    Executive Takeaway:
+    The stronger upward narrative signal appears in {stronger_company}, led by {stronger_risk} risk ({stronger_value}).
+
+    Key Risk Movement:
+    • {company_a}: top increase = {top_a} risk ({value_a})
+    • {company_b}: top increase = {top_b} risk ({value_b})
+    • Stronger signal: {stronger_company}
+
+    Interpretation:
+    This comparison does not prove one company is objectively riskier. It identifies where each company’s risk narrative changed most strongly during the selected reporting period.
+
+    Analyst Review Priorities:
+    • Review highlighted evidence snippets for both companies
+    • Compare wording across filing periods
+    • Determine whether the shift reflects company-specific exposure, industry-wide pressure, or filing-period changes
+
+    Decision Support Note:
+    This brief helps analysts compare narrative risk shifts across companies and convert disclosure changes into explainable decision support.
+    """)
 
 
 st.sidebar.title("Control Panel")
@@ -745,6 +780,7 @@ def apply_dark_theme(fig):
     return fig
 
 
+
 with tab2:
     st.subheader("Single Company Report")
 
@@ -797,7 +833,6 @@ with tab2:
 
         if len(selected_rows) == 1:
             themed_risk_chart(risk_change, "Risk Change Chart", chart_type)
-
         else:
             df = selected_rows[["older_year", "newer_year"] + risk_columns].copy()
             df["Period"] = (
@@ -832,6 +867,27 @@ with tab2:
 
             fig = apply_dark_theme(fig)
             st.plotly_chart(fig, use_container_width=True)
+
+        single_report_text = make_single_report_text(
+            selected_company,
+            row,
+            risk_change
+        )
+
+        st.markdown("#### Exportable Single Company Report")
+
+        st.markdown(
+            f'<div class="report-box">{single_report_text}</div>',
+            unsafe_allow_html=True,
+        )
+
+        st.download_button(
+            label="Export Single Company Report",
+            data=single_report_text,
+            file_name=f"{selected_company}_{filing_type_filter}_single_company_report.txt",
+            mime="text/plain",
+        )
+
 
 
 with tab3:
